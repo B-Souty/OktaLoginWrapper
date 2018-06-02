@@ -88,7 +88,7 @@ class OktaSession(object):
             'accept-language': "en-US,en;q=0.9,fr;q=0.8,nl;q=0.7",
             'cache-control': "no-cache",
         }
-        return my_session.okta_session.post(url=url_saml, data=payload_saml, headers=headers_saml)
+        return self.okta_session.post(url=url_saml, data=payload_saml, headers=headers_saml)
 
     def connect_from_appslist(self):
         app_name = input('app name: ').lower()
