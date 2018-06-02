@@ -38,15 +38,14 @@ class OktaSession(object):
     def okta_auth(self, username, password):
         """Initiate connection to Okta instance
 
-                Args:
-                    username (str): Okta username.
-                    password (str): Okta password.
+        Args:
+            username (str): Okta username.
+            password (str): Okta password.
 
-                Calls:
-                    _okta_verify() with auth_params as arguments if
-                    username/password are correct.
-                """
-
+        Calls:
+            _okta_verify() with auth_params as arguments if
+            username/password are correct.
+        """
         url_authn = 'https://{}.okta.com/api/v1/authn'.format(self.organization)
         payload_authn = json.dumps({
             "username": username,
@@ -75,7 +74,6 @@ class OktaSession(object):
         Returns:
             The Okta session is updated with the required cookies for future connection.
         """
-
         url_push = "https://{}.okta.com/api/v1/authn/factors/{}/verify".format(self.organization, auth_params['factor_id'])
         payload_push = json.dumps({"stateToken": auth_params['state_token'],
                                    "factorType": "push",
