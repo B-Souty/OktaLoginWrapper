@@ -10,6 +10,15 @@ Helps you connect to resources behind Okta SSO
     * lxml
 * An Okta account 
 
+### Installing
+
+Simply make sure you have the required python modules installed. 
+
+```
+pip install -r requirements.txt
+```
+Once done, place OktaLoginWrapper.py in the same folder as your own script. 
+
 ## Getting Started
 
 **\~WARNING\~ Currently the script only works if you have "push" enabled as MFA.**
@@ -22,7 +31,10 @@ As part of another scripts, it allows you to have an okta_session object from wh
 ```
 #  Create a session with your okta instance name as well as your credentials.
 #  If the credentials are correct, you'll be asked for MFA. (Currently only work with push notification)
-my_session = OktaSession(okta_instance)
+import OktaLoginWrapper as OLW
+
+
+my_session = OLW.OktaSession(okta_instance) #Where okta_instance is https://<okta_instance>.okta.com
 my_session.okta_auth(okta_username, okta_password)
 ```
 
@@ -51,13 +63,6 @@ my_session.okta_session.close()
 
 It can also be executed but this is mainly a proof of concept as it just print the raw content.
 
-### Installing
-
-Simply make sure you you have the required python modules installed. 
-
-```
-pip install -r requirements.txt
-```
 
 ## Built With
 
