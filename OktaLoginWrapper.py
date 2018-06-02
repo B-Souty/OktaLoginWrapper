@@ -23,7 +23,6 @@ class OktaSession(object):
 
         Args:
             organization (str): okta instance name (<organization>.okta.com).
-
         """
         self.organization = str(organization).lower()
         self.okta_session = requests.session()
