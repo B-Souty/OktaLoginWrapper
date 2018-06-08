@@ -7,8 +7,23 @@ import time
 
 
 class OktaSession(object):
+    """An Okta session
+
+    Provide an Okta session with the proper cookies to login to apps.
+
+    Attributes:
+        organization (str): Okta instance name.
+        okta_session (:obj:`requests.session`): Session object with Okta cookies.
+        _session_token (str): SAML session token.
+        _user_id (str): Okta user_id.
+    """
 
     def __init__(self, organization):
+        """__init__ method.
+
+        Args:
+            organization (str): okta instance name (<organization>.okta.com).
+        """
         self.organization = str(organization).lower()
         self.okta_session = requests.session()
         self.okta_session.headers.update({
@@ -20,6 +35,16 @@ class OktaSession(object):
         self._user_id = None
 
     def okta_auth(self, username, password):
+        """Initiate connection to Okta instance
+
+        Args:
+            username (str): Okta username.
+            password (str): Okta password.
+
+        Calls:
+            _okta_verify() with auth_params as arguments if
+            username/password are correct.
+        """
         url_authn = 'https://{}.okta.com/api/v1/authn'.format(self.organization)
         payload_authn = json.dumps({
             "username": username,
@@ -37,6 +62,17 @@ class OktaSession(object):
         return self._okta_verify(auth_params)
 
     def _okta_verify(self, auth_params):
+        """Request 2nd factor authentication
+
+        Args:
+            auth_params (dict): {
+                state_token (str): token generated during authentication
+                factor_id (str): factor_id used for 2nd factor
+            }
+
+        Returns:
+            The Okta session is updated with the required cookies for future connection.
+        """
         url_push = "https://{}.okta.com/api/v1/authn/factors/{}/verify".format(self.organization, auth_params['factor_id'])
         payload_push = json.dumps({"stateToken": auth_params['state_token'],
                                    "factorType": "push",
@@ -58,6 +94,7 @@ class OktaSession(object):
         self.okta_session.get(url=cookie_brewer_url)
 
     def app_list(self):
+        """Return a list of apps assigned to the logged in user."""
         appslist_url = "https://{}.okta.com/api/v1/users/{}/appLinks/".format(self.organization, self._user_id)
         appslist_headers = {
             "Host": "{}.okta.com".format(self.organization),
@@ -71,6 +108,14 @@ class OktaSession(object):
         return self.okta_session.get(url=appslist_url, headers=appslist_headers).json()
 
     def connect_to(self, url_app):
+        """Connect to an assigned app.
+
+        Args:
+            url_app (str): the "Embed Link" of an okta app assigned to the logged in user
+
+        Returns:
+            requests.models.Response object of the homepage of the app you're connecting to.
+        """
         response = self.okta_session.get(url=url_app)
         tree = html.fromstring(response.text)
         saml_response = tree.xpath('//input[@name="SAMLResponse"]')[0].attrib.get('value')
@@ -91,6 +136,7 @@ class OktaSession(object):
         return self.okta_session.post(url=url_saml, data=payload_saml, headers=headers_saml)
 
     def connect_from_appslist(self):
+        """Provide an nteractive way to connect to an app"""
         app_name = input('app name: ').lower()
         results = [{'name': i.get('label'), 'link': i.get('linkUrl')} for i in self.app_list() if app_name in i.get('label').lower()]
         for ind, app in enumerate(results):
