@@ -1,6 +1,6 @@
 # Okta Login Wrapper
 
-Helps you connect to resources behind Okta SSO
+Provide an easy way for your scripts to access ressources behind an Okta SSO solution, without the need for an API token.
 
 ## Prerequisite
 
