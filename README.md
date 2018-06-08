@@ -29,20 +29,23 @@ As part of another scripts, it allows you to have an okta_session object from wh
 
 
 ```
-#  Create a session with your okta instance name as well as your credentials.
-#  If the credentials are correct, you'll be asked for MFA. (Currently only work with push notification)
 import OktaLoginWrapper as OLW
 
+
+#  Create a session with your okta instance name as well as your credentials.
+#  If the credentials are correct, you'll be asked for MFA. (Currently only work with push notification)
 
 my_session = OLW.OktaSession(okta_instance) #Where okta_instance is https://<okta_instance>.okta.com
 my_session.okta_auth(okta_username, okta_password)
 ```
+Then, depending on the type of script you are writing, here's what you can do.
 
 As a non-interactive script:
 ```
-#  get a list of available app along with their url
-app_list = my_session.app_list()
-#  Find the url of the app you want to login to from app_list then run
+#  Use connect_to() with the 'Embed Link' of an app in Okta as parameter. 
+#  You can find that url in Okta admin portal on the general tab of an app.
+#  Or by using the provided method app_list()
+
 my_app = my_session.connect_to(app_url)
 ```
 
@@ -60,8 +63,8 @@ Close the session once you're done.
 my_session.okta_session.close()
 ```
 
-
-It can also be executed but this is mainly a proof of concept as it just print the raw content.
+It can also be executed but this is mainly a proof of concept as it just print the raw content. 
+I will probably remove that part at some point in the future.
 
 
 ## Built With
