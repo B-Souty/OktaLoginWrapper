@@ -1,3 +1,6 @@
+__appname__ = 'OktaLoginWrapper'
+__author__ = 'B-Souty'
+
 from lxml import html, etree
 from base64 import b64decode
 from getpass import getpass
