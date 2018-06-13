@@ -2,3 +2,6 @@
 .idea
 sandbox
 *.pyc
+
+build
+dist
