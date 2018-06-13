@@ -6,6 +6,7 @@ setup(name='oktaloginwrapper',
       description='Okta login made easy from the command line without API token',
       url='https://github.com/B-Souty/OktaLoginWrapper',
       author='B-Souty',
+      author_email='benjamin.souty@gmail.com',
       license='MIT',
       packages=['oktaloginwrapper'],
       zip_safe=False)
