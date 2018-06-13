@@ -29,7 +29,7 @@ As part of another scripts, it allows you to have an okta_session object from wh
 
 
 ```
-import OktaLoginWrapper as OLW
+from oktaloginwrapper import OktaLoginWrapper as OLW
 
 
 #  Create a session with your okta instance name as well as your credentials.
