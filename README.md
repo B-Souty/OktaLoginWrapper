@@ -5,9 +5,6 @@ Provide an easy way for your scripts to access ressources behind an Okta SSO sol
 ## Prerequisite
 
 * Python 3
-* Python modules
-    * Requests
-    * lxml
 * An Okta account 
 
 ### Installing
