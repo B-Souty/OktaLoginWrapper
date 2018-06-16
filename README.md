@@ -10,6 +10,7 @@ Provide an easy way for your scripts to access ressources behind an Okta SSO sol
 ### Installing
 
 oktaloginwrapper is now available on Pypi. Simply install it with:
+
 ```pip install oktaloginwrapper```
 
 ## Getting Started
