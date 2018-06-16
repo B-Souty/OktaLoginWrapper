@@ -12,12 +12,8 @@ Provide an easy way for your scripts to access ressources behind an Okta SSO sol
 
 ### Installing
 
-Simply make sure you have the required python modules installed. 
-
-```
-pip install -r requirements.txt
-```
-Once done, place OktaLoginWrapper.py in the same folder as your own script. 
+oktaloginwrapper is now available on Pypi. Simply install it with:
+```pip install oktaloginwrapper```
 
 ## Getting Started
 
