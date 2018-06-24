@@ -56,7 +56,8 @@ class OktaSession(object):
                         "multiOptionalFactorEnroll": True},
         })
         response = self.okta_session.post(url_authn, data=payload_authn)
-
+        if response.status_code != 200:
+            raise ConnectionError("Unable to connect. Reason: {}".format(response.reason))
         factors = json.loads(response.text).get('_embedded').get('factors')
         auth_params = {
             'state_token': json.loads(response.text).get('stateToken'),
