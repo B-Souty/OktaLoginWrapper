@@ -66,37 +66,35 @@ class OktaSession(object):
 
         factors = json.loads(response.text).get('_embedded').get('factors')
         auth_params = {
-            'state_token': json.loads(response.text).get('stateToken'),
+            'stateToken': json.loads(response.text).get('stateToken'),
             'factor_id': [i['id'] for i in factors if factor_type in i.get('factorType')][0],
-            'factor_type': factor_type,
+            'provider': 'OKTA',
             'answer': answer,
             'passCode': passCode,
         }
-        return self._okta_verify(auth_params)
+        return self._okta_verify(auth_params, factor_type)
 
-    def _okta_verify(self, auth_params):
+    def _okta_verify(self, auth_params, factor_type):
         """Request 2nd factor authentication
 
         Args:
             auth_params (dict): {
-                state_token (str): token generated during authentication
+                stateToken (str): token generated during authentication
                 factor_id (str): factor_id used for 2nd factor
+                provider (str): just OKTA
+                answer (str): answer to the secret question
+                passCode (str): token generated OTP
             }
+            factor_type (str): type of MFA to use
 
         Returns:
             The Okta session is updated with the required cookies for future connection.
         """
         url_push = "https://{}.okta.com/api/v1/authn/factors/{}/verify".format(self.organization, auth_params['factor_id'])
-        payload_push = {"stateToken": auth_params['state_token'],
-                        "factorType": auth_params['factor_type'],
-                        "provider": "OKTA",
-                        "answer": auth_params['answer'],
-                        "passCode": auth_params['passCode'],
-                        }
-        response = self.okta_session.post(url_push, data=json.dumps(payload_push))
+        response = self.okta_session.post(url_push, data=json.dumps(auth_params))
         mfa_state = json.loads(response.text).get('status')
 
-        if auth_params['factor_type'] == 'push':
+        if factor_type == 'push':
             timeout = time.time() + 60
             while mfa_state != 'SUCCESS':
                 timer = int(timeout - time.time())
@@ -105,25 +103,25 @@ class OktaSession(object):
                     return "Connection timed out."
                 print("{} seconds remaining before timeout.".format(timer))
                 time.sleep(2)
-                response = self.okta_session.post(url_push, data=json.dumps(payload_push))
+                response = self.okta_session.post(url_push, data=json.dumps(auth_params))
                 mfa_state = json.loads(response.text).get('status')
                 if json.loads(response.text).get('factorResult') == 'REJECTED':
                     self.okta_session.close()
                     return "You rejected the connection, closing the session."
 
-        if auth_params['factor_type'] == 'question':
+        if factor_type == 'question':
             while mfa_state != 'SUCCESS':
-                secret_question = json.loads(response.text).get('_embedded').get('user').get('profile').get('questionText')
+                secret_question = json.loads(response.text).get('_embedded').get('factor').get('profile').get('questionText')
                 answer = input(secret_question)
-                payload_push.update({'answer': answer})
-                response = self.okta_session.post(url_push, data=json.dumps(payload_push))
+                auth_params.update({'answer': answer})
+                response = self.okta_session.post(url_push, data=json.dumps(auth_params))
                 mfa_state = json.loads(response.text).get('status')
 
-        if auth_params['factor_type'] == 'token':
+        if factor_type == 'token':
             while mfa_state != 'SUCCESS':
                 passCode = str(input('Please type in your OTP: '))
-                payload_push.update({'passCode': passCode})
-                response = self.okta_session.post(url_push, data=json.dumps(payload_push))
+                auth_params.update({'passCode': passCode})
+                response = self.okta_session.post(url_push, data=json.dumps(auth_params))
                 mfa_state = json.loads(response.text).get('status')
 
         self._session_token = json.loads(response.text).get('sessionToken')
