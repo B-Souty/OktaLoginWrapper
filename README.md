@@ -15,47 +15,109 @@ oktaloginwrapper is now available on Pypi. Simply install it with:
 
 ## Getting Started
 
-**\~WARNING\~ Currently the script only works if you have "push" enabled as MFA.**
+**\~WARNING\~ Currently the script only works if you have "push", "secret question" or "software token" enabled as MFA.**
 
 The main goal of this script is to help you login to an application using SSO with Okta, without requiring any API token.
 
 As part of another scripts, it allows you to have an okta_session object from where you can connect to all application assigned to you in Okta.
 
-
-```
+Start by importing the module and instantiate an OktaSession object with your Okta instance/organization name.
+```Python
 from oktaloginwrapper import OktaLoginWrapper as OLW
 
-
-#  Create a session with your okta instance name as well as your credentials.
-#  If the credentials are correct, you'll be asked for MFA. (Currently only work with push notification)
-
 my_session = OLW.OktaSession(okta_instance) #Where okta_instance is https://<okta_instance>.okta.com
-my_session.okta_auth(okta_username, okta_password)
-```
-Then, depending on the type of script you are writing, here's what you can do.
-
-As a non-interactive script:
-```
-#  Use connect_to() with the 'Embed Link' of an app in Okta as parameter. 
-#  You can find that url in Okta admin portal on the general tab of an app.
-#  Or by using the provided method app_list()
-
-my_app = my_session.connect_to(app_url)
 ```
 
-As an interactive script:
-```
-#  You can prompt the user to type the name of an app he wants to log into.
-#  A list is returned with with corresponding apps and the user has to select which one to login to.
-#  If connection is successful, it returns a requests.models.response of the homepage of the app.
-#  From there, you can navigate the app using your object my_session.
+Then, depending on the type of multi-factor you want to use, you can do as follow
 
-my_app = my_session.connect_from_appslist()
-```
-Close the session once you're done.
-```
-my_session.okta_session.close()
-```
+* **Most Basic use with push notification (default). You have 60 seconds to approve the connection on your phone.**
+  ```Python
+  >>>  my_session.okta_auth(
+  ...    username='<your_username>',
+  ...    password='<your_password>',
+  ...  )
+  
+  59 seconds remaining before timeout.
+  57 seconds remaining before timeout.
+  55 seconds remaining before timeout.
+  'You are now logged in.'
+  ```
+* **Connect using the secret question.**
+  * You can provide the answer directly during authentication. this will log you straight in.
+    ```Python
+    >>>  my_session.okta_auth(
+    ...    username='<your_username>',
+    ...    password='<your_password>',
+    ...    answer='<your_answer>'
+    ...  )
+    
+    'You are now logged in.'
+    ```
+  * Or using the interactive way by providing the factor_type. You will be prompted to enter the answer.
+    ```Python
+    >>>  my_session.okta_auth(
+    ...    username='<your_username>',
+    ...    password='<your_password>',
+    ...    factor_type='question'
+    ...  )
+    
+    What was your dream job as a child >? <your_answer>
+    'You are now logged in.'
+    ```
+* **Connect using a software token. (Currently not tested with hardware token)**
+  * You can provide the passCode directly during authentication. this will log you straight in.
+    ```Python
+    >>>  my_session.okta_auth(
+    ...    username='<your_username>',
+    ...    password='<your_password>',
+    ...    passCode='<your_passCode>'
+    ...  )
+    
+    'You are now logged in.'
+    ```
+  * Or using the interactive way by providing the factor_type. You will be prompted to enter the passCode.
+    ```Python
+    >>>  my_session.okta_auth(
+    ...    username='<your_username>',
+    ...    password='<your_password>',
+    ...    factor_type='token'
+    ...  )
+    
+    Please type in your OTP: >? <your_passCode>
+    'You are now logged in.'
+    ```
+* **Connect to an app assigned to you.**
+  * You need to know the "embedded" link of the app you want to log into and pass it as an argument of connect_to(). 
+    ```Python
+    my_app = my_session.connect_to(<your_app_url>)
+    ```
+  Alternatively, you can use the provided method app_list() to retrieve the list of apps assigned to you along with their url and connect from there. 
+    ```Python
+    >>> my_apps = my_session.app_list()
+
+    >>> my_app = None
+    >>> app_name = <your_app_name>
+    >>> for app in my_apps:
+    ...     if app.get('label') == app_name:
+    ...         my_app = my_session.connect_to(app.get('linkUrl'))
+
+    >>> if not my_app:
+    ...     print("You do not have {} assigned in Okta.".format(app_name))
+    ```
+  * You can also use the method connect_from_appslist() to get an interactive way to select you app and connect to it.
+  ```Python
+  >>> my_app = my_session.connect_from_appslist()
+  
+  app name: >? Slack
+  0 - Slack
+  1 - Slack-dev
+  Please select the app to connect to: >? 0
+  ```
+
+* Then simply close the session when you're done.
+  ```Python
+  my_session.okta_session.close()
+  ```
 
 It can also be executed but this is mainly a proof of concept as it just print the raw content. 
 I will probably remove that part at some point in the future.
