@@ -72,6 +72,7 @@ class OktaSession(object):
             'answer': answer,
             'passCode': passCode,
         }
+        factor_type = [i['factorType'] for i in factors if i['id'] == auth_params['factor_id']][0]
         return self._okta_verify(auth_params, factor_type)
 
     def _okta_verify(self, auth_params, factor_type):
@@ -117,7 +118,7 @@ class OktaSession(object):
                 response = self.okta_session.post(url_push, data=json.dumps(auth_params))
                 mfa_state = json.loads(response.text).get('status')
 
-        if factor_type == 'token':
+        if 'token' in factor_type:
             while mfa_state != 'SUCCESS':
                 passCode = str(input('Please type in your OTP: '))
                 auth_params.update({'passCode': passCode})
