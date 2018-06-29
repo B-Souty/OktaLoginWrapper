@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(name='oktaloginwrapper',
       install_requires=['lxml', 'requests'],
-      version='0.1',
+      version='0.2',
       description='Okta login made easy from the command line without API token',
       long_description=long_description,
       long_description_content_type="text/markdown",
@@ -15,7 +15,7 @@ setup(name='oktaloginwrapper',
       license='MIT',
       packages=['oktaloginwrapper'],
       classifiers=(
-            "Programming Language :: Python :: 3",
-            "License :: OSI Approved :: MIT License",
-            "Operating System :: OS Independent",
+            'Programming Language :: Python :: 3',
+            'License :: OSI Approved :: MIT License',
+            'Operating System :: OS Independent',
       ),)
