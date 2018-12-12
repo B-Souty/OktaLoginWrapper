@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(name='oktaloginwrapper',
       install_requires=['lxml', 'requests'],
-      version='0.2',
+      version='0.2.1',
       description='Okta login made easy from the command line without API token',
       long_description=long_description,
       long_description_content_type="text/markdown",
