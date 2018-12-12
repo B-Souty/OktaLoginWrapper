@@ -64,6 +64,12 @@ class OktaSession(object):
         })
         response = self.okta_session.post(url_authn, data=payload_authn)
 
+        if response.json().get('status') == "SUCCESS":
+            self._session_token = response.json().get('sessionToken')
+            self._user_id = response.json().get('_embedded').get('user').get('id')
+            self._cookie_brewer()
+            return "Successfully logged in."
+
         factors = json.loads(response.text).get('_embedded').get('factors')
         auth_params = {
             'stateToken': json.loads(response.text).get('stateToken'),
@@ -127,9 +133,12 @@ class OktaSession(object):
 
         self._session_token = json.loads(response.text).get('sessionToken')
         self._user_id = json.loads(response.text).get('_embedded').get('user').get('id')
+        self._cookie_brewer()
+        return "You are now logged in."
+
+    def _cookie_brewer(self):
         cookie_brewer_url = 'https://{0}.okta.com/login/sessionCookieRedirect?checkAccountSetupComplete=true&token={1}&redirectUrl=https%3A%2F%2F{0}.okta.com%2Fuser%2Fnotifications'.format(self.organization, self._session_token)
         self.okta_session.get(url=cookie_brewer_url)
-        return "You are now logged in."
 
     def app_list(self):
         """Return a list of apps assigned to the logged in user."""
