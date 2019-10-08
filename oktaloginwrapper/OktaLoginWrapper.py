@@ -69,8 +69,14 @@ class OktaSession(object):
             self._user_id = response.json().get('_embedded').get('user').get('id')
             self._cookie_brewer()
             return "Successfully logged in."
-
-        factors = json.loads(response.text).get('_embedded').get('factors')
+        #Adds error handling that catches errors thrown when the specified account fails to log on.
+        try:
+            factors = json.loads(response.text).get('_embedded').get('factors')
+        except AttributeError as err:
+            temp = input("Your Okta credentials were either entered wrong or the specified account is locked out. \n Please type yes to review the error")
+            if list(temp)[0] == 'y':
+                print(err)
+            quit()
         auth_params = {
             'stateToken': json.loads(response.text).get('stateToken'),
             'factor_id': [i['id'] for i in factors if factor_type in i.get('factorType')][0],
@@ -100,37 +106,44 @@ class OktaSession(object):
         url_push = "https://{}.okta.com/api/v1/authn/factors/{}/verify".format(self.organization, auth_params['factor_id'])
         response = self.okta_session.post(url_push, data=json.dumps(auth_params))
         mfa_state = json.loads(response.text).get('status')
+        # Adds error handling that catches errors thrown when the specified account fails second factor authentication method.
+        try:
+            if factor_type == 'push':
+                timeout = time.time() + 60
+                while mfa_state != 'SUCCESS':
+                    timer = int(timeout - time.time())
+                    if timer <= 0:
+                        self.okta_session.close()
+                        print("Connection timed out.")
+                        quit()
+                    print("{} seconds remaining before timeout.".format(timer))
+                    time.sleep(2)
+                    response = self.okta_session.post(url_push, data=json.dumps(auth_params))
+                    mfa_state = json.loads(response.text).get('status')
+                    if json.loads(response.text).get('factorResult') == 'REJECTED':
+                        self.okta_session.close()
+                        print("You rejected the connection, closing the session.")
+                        quit()
 
-        if factor_type == 'push':
-            timeout = time.time() + 60
-            while mfa_state != 'SUCCESS':
-                timer = int(timeout - time.time())
-                if timer <= 0:
-                    self.okta_session.close()
-                    return "Connection timed out."
-                print("{} seconds remaining before timeout.".format(timer))
-                time.sleep(2)
-                response = self.okta_session.post(url_push, data=json.dumps(auth_params))
-                mfa_state = json.loads(response.text).get('status')
-                if json.loads(response.text).get('factorResult') == 'REJECTED':
-                    self.okta_session.close()
-                    return "You rejected the connection, closing the session."
+            if factor_type == 'question':
+                while mfa_state != 'SUCCESS':
+                    secret_question = json.loads(response.text).get('_embedded').get('factor').get('profile').get('questionText')
+                    answer = input(secret_question)
+                    auth_params.update({'answer': answer})
+                    response = self.okta_session.post(url_push, data=json.dumps(auth_params))
+                    mfa_state = json.loads(response.text).get('status')
 
-        if factor_type == 'question':
-            while mfa_state != 'SUCCESS':
-                secret_question = json.loads(response.text).get('_embedded').get('factor').get('profile').get('questionText')
-                answer = input(secret_question)
-                auth_params.update({'answer': answer})
-                response = self.okta_session.post(url_push, data=json.dumps(auth_params))
-                mfa_state = json.loads(response.text).get('status')
-
-        if 'token' in factor_type:
-            while mfa_state != 'SUCCESS':
-                passCode = str(input('Please type in your OTP: '))
-                auth_params.update({'passCode': passCode})
-                response = self.okta_session.post(url_push, data=json.dumps(auth_params))
-                mfa_state = json.loads(response.text).get('status')
-
+            if 'token' in factor_type:
+                while mfa_state != 'SUCCESS':
+                    passCode = str(input('Please type in your OTP: '))
+                    auth_params.update({'passCode': passCode})
+                    response = self.okta_session.post(url_push, data=json.dumps(auth_params))
+                    mfa_state = json.loads(response.text).get('status')
+        except AttributeError as err:
+            temp = input("There was an issue validating your second factor authentication methon. \n Please type yes to review the error")
+            if list(temp)[0] == 'y':
+                print(err)
+            quit()
         self._session_token = json.loads(response.text).get('sessionToken')
         self._user_id = json.loads(response.text).get('_embedded').get('user').get('id')
         self._cookie_brewer()
@@ -183,7 +196,7 @@ class OktaSession(object):
         return self.okta_session.post(url=url_saml, data=payload_saml, headers=headers_saml)
 
     def connect_from_appslist(self):
-        """Provide an nteractive way to connect to an app"""
+        """Provide an interactive way to connect to an app"""
         app_name = input('app name: ').lower()
         results = [{'name': i.get('label'), 'link': i.get('linkUrl')} for i in self.app_list() if app_name in i.get('label').lower()]
         for ind, app in enumerate(results):
